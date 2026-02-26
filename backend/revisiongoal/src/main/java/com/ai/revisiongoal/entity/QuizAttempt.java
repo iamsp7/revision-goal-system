@@ -1,28 +1,27 @@
 package com.ai.revisiongoal.entity;
 
-
-
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class QuizAttempt {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long userId;
-    private Long questionId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "session_id")
+    private QuizSession quizSession;
 
-    private String questionType; // MCQ / CODE
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "mcq_id")
+    private MCQQuestion mcqQuestion;
+
     private boolean correct;
     private double score;
-
-    private LocalDateTime attemptedAt;
 }

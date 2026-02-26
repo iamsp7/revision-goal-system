@@ -1,10 +1,6 @@
 package com.ai.revisiongoal.controller;
 
-
-
-
 import org.springframework.web.bind.annotation.*;
-
 import com.ai.revisiongoal.entity.QuizAttempt;
 import com.ai.revisiongoal.service.QuizAttemptService;
 
@@ -21,13 +17,15 @@ public class QuizAttemptController {
         this.service = service;
     }
 
+    // Save single question attempt (used internally during quiz submit)
     @PostMapping
-    public QuizAttempt submitAttempt(@RequestBody QuizAttempt attempt) {
+    public QuizAttempt saveAttempt(@RequestBody QuizAttempt attempt) {
         return service.saveAttempt(attempt);
     }
 
-    @GetMapping("/user/{userId}")
-    public List<QuizAttempt> getUserAttempts(@PathVariable Long userId) {
-        return service.getAttemptsByUser(userId);
+    // Get attempts by quiz session
+    @GetMapping("/session/{sessionId}")
+    public List<QuizAttempt> getAttemptsBySession(@PathVariable Long sessionId) {
+        return service.getAttemptsBySession(sessionId);
     }
 }

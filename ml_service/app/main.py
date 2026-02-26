@@ -1,94 +1,169 @@
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, Form
 import pdfplumber
-import random
+import requests
+import json
 import re
-import spacy
-from sklearn.feature_extraction.text import TfidfVectorizer
+from bs4 import BeautifulSoup
 
 app = FastAPI()
 
-nlp = spacy.load("en_core_web_sm")
+OLLAMA_URL = "http://localhost:11434/api/generate"
+MODEL_NAME = "mistral"  # more stable for structured output
 
 
-def clean_text(text):
-    text = re.sub(r'\s+', ' ', text)
-    text = re.sub(r'[^a-zA-Z0-9., ]', '', text)
-    return text
+# -----------------------------
+# Common MCQ Generator
+# -----------------------------
+def generate_mcqs_with_ollama(text):
+
+    text = text[:2000]  # keep safe for RAM
+
+    prompt = f"""
+You are a strict JSON generator.
+
+Generate EXACTLY 10 multiple choice questions.
+
+Rules:
+- 4 options per question
+- Only 1 correct answer
+- No explanations
+- No extra text
+- Output MUST be valid JSON
+- Do NOT write anything before or after JSON
+
+JSON FORMAT:
+
+{{
+  "mcqs": [
+    {{
+      "question": "Question text",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "answer": "Correct Option"
+    }}
+  ]
+}}
+
+Content:
+{text}
+"""
+
+    try:
+        response = requests.post(
+            OLLAMA_URL,
+            json={
+                "model": MODEL_NAME,
+                "prompt": prompt,
+                "stream": False,
+                "options": {
+                    "temperature": 0.1,
+                    "num_predict": 2048
+                }
+            },
+            timeout=180
+        )
+
+        raw_output = response.json().get("response", "")
+
+        print("\nRAW MODEL OUTPUT:\n", raw_output)
+
+        # Remove markdown blocks if present
+        raw_output = raw_output.replace("```json", "").replace("```", "").strip()
+
+        # Extract JSON block safely
+        start = raw_output.find("{")
+        end = raw_output.rfind("}") + 1
+
+        if start != -1 and end != -1:
+            json_str = raw_output[start:end]
+
+            try:
+                parsed = json.loads(json_str)
+
+                if "mcqs" in parsed and len(parsed["mcqs"]) == 10:
+                    return parsed
+
+            except Exception as e:
+                print("First parse failed:", e)
+
+        print("Retrying once due to invalid JSON...")
+
+        # Retry once
+        response_retry = requests.post(
+            OLLAMA_URL,
+            json={
+                "model": MODEL_NAME,
+                "prompt": prompt,
+                "stream": False,
+                "options": {
+                    "temperature": 0.1,
+                    "num_predict": 2048
+                }
+            },
+            timeout=180
+        )
+
+        retry_output = response_retry.json().get("response", "")
+        retry_output = retry_output.replace("```json", "").replace("```", "").strip()
+
+        parsed_retry = json.loads(retry_output)
+
+        if "mcqs" in parsed_retry:
+            return parsed_retry
+
+        return {"mcqs": []}
+
+    except Exception as e:
+        print("Ollama error:", e)
+        return {"mcqs": []}
 
 
-def extract_keywords(text, top_n=50):
-    doc = nlp(text)
+# -----------------------------
+# 1️⃣ Generate from PDF
+# -----------------------------
+@app.post("/generate-from-pdf")
+async def generate_from_pdf(file: UploadFile = File(...)):
 
-    nouns = [token.text for token in doc 
-             if token.pos_ in ["NOUN", "PROPN"] and len(token.text) > 3]
-
-    # TF-IDF for importance
-    vectorizer = TfidfVectorizer(stop_words='english')
-    X = vectorizer.fit_transform([text])
-    feature_names = vectorizer.get_feature_names_out()
-
-    scores = X.toarray()[0]
-    word_score = dict(zip(feature_names, scores))
-
-    ranked = sorted(
-        [w.lower() for w in nouns if w.lower() in word_score],
-        key=lambda x: word_score[x],
-        reverse=True
-    )
-
-    return list(set(ranked[:top_n]))
-
-
-def generate_mcqs(text, num_questions=15):
-    sentences = re.split(r'[.!?]', text)
-    sentences = [s.strip() for s in sentences if len(s.split()) > 8]
-
-    keywords = extract_keywords(text)
-
-    mcqs = []
-
-    for sentence in sentences:
-        for keyword in keywords:
-            if keyword in sentence.lower():
-                question = sentence.replace(keyword, "_____")
-
-                distractors = random.sample(
-                    [k for k in keywords if k != keyword],
-                    min(3, len(keywords)-1)
-                )
-
-                options = distractors + [keyword]
-                random.shuffle(options)
-
-                mcqs.append({
-                    "question": question.strip(),
-                    "options": options,
-                    "answer": keyword
-                })
-
-                break
-
-        if len(mcqs) >= num_questions:
-            break
-
-    return mcqs
-
-
-@app.post("/generate-mcq")
-async def generate_mcq(file: UploadFile = File(...)):
     text = ""
-
     with pdfplumber.open(file.file) as pdf:
         for page in pdf.pages:
-            page_text = page.extract_text()
-            if page_text:
-                text += page_text + " "
-
-    text = clean_text(text)
+            t = page.extract_text()
+            if t:
+                text += t + " "
 
     if not text.strip():
         return {"mcqs": []}
 
-    mcqs = generate_mcqs(text)
+    return generate_mcqs_with_ollama(text)
 
-    return {"mcqs": mcqs}
+
+# -----------------------------
+# 2️⃣ Generate from Topic
+# -----------------------------
+@app.post("/generate-from-topic")
+async def generate_from_topic(topic: str = Form(...)):
+
+    text = f"Create MCQs about the topic: {topic}"
+
+    return generate_mcqs_with_ollama(text)
+
+
+# -----------------------------
+# 3️⃣ Generate from Website Link
+# -----------------------------
+@app.post("/generate-from-link")
+async def generate_from_link(url: str = Form(...)):
+
+    try:
+        page = requests.get(url, timeout=10)
+        soup = BeautifulSoup(page.text, "html.parser")
+
+        text = " ".join([p.get_text() for p in soup.find_all("p")])
+
+        if not text.strip():
+            return {"mcqs": []}
+
+        return generate_mcqs_with_ollama(text)
+
+    except Exception as e:
+        print("Website extraction error:", e)
+        return {"mcqs": []}
