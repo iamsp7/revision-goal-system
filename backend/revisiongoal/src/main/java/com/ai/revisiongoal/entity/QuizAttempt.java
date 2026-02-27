@@ -2,6 +2,7 @@ package com.ai.revisiongoal.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Data
@@ -16,6 +17,7 @@ public class QuizAttempt {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "session_id")
+    @JsonIgnore
     private QuizSession quizSession;
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -1,9 +1,14 @@
 package com.ai.revisiongoal.controller;
 
 import org.springframework.web.bind.annotation.*;
-import com.ai.revisiongoal.entity.QuizSession;
-import com.ai.revisiongoal.service.QuizSessionService;
+import org.springframework.security.core.Authentication;
 
+import com.ai.revisiongoal.entity.QuizSession;
+import com.ai.revisiongoal.entity.User;
+import com.ai.revisiongoal.service.QuizSessionService;
+import com.ai.revisiongoal.repository.UserRepository;
+
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -12,18 +17,29 @@ import java.util.List;
 public class QuizSessionController {
 
     private final QuizSessionService service;
+    private final UserRepository userRepository;
 
-    public QuizSessionController(QuizSessionService service) {
+    public QuizSessionController(QuizSessionService service,
+                                 UserRepository userRepository) {
         this.service = service;
+        this.userRepository = userRepository;
     }
 
-    // Start quiz
     @PostMapping("/start")
-    public QuizSession startSession(@RequestBody QuizSession session) {
+    public QuizSession startSession(Authentication authentication,
+                                    @RequestBody QuizSession session) {
+
+        String email = authentication.getName();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        session.setUserId(user.getId());
+        session.setStartedAt(LocalDateTime.now());
+
         return service.startSession(session);
     }
 
-    // Finish quiz
     @PostMapping("/finish/{sessionId}")
     public QuizSession finishSession(
             @PathVariable Long sessionId,
@@ -34,9 +50,14 @@ public class QuizSessionController {
         return service.finishSession(sessionId, totalQuestions, correctAnswers, totalScore);
     }
 
-    // Get all sessions of a user
-    @GetMapping("/user/{userId}")
-    public List<QuizSession> getUserSessions(@PathVariable Long userId) {
-        return service.getSessionsByUser(userId);
+    @GetMapping("/me")
+    public List<QuizSession> getMySessions(Authentication authentication) {
+
+        String email = authentication.getName();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return service.getSessionsByUser(user.getId());
     }
 }

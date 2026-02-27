@@ -17,13 +17,13 @@ public class QuizAttemptController {
         this.service = service;
     }
 
-    // Save single question attempt (used internally during quiz submit)
+    // Save single question attempt
     @PostMapping
     public QuizAttempt saveAttempt(@RequestBody QuizAttempt attempt) {
         return service.saveAttempt(attempt);
     }
 
-    // Get attempts by quiz session
+    // Get attempts by session
     @GetMapping("/session/{sessionId}")
     public List<QuizAttempt> getAttemptsBySession(@PathVariable Long sessionId) {
         return service.getAttemptsBySession(sessionId);

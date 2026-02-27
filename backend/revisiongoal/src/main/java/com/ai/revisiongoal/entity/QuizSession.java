@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
 
 @Entity
@@ -19,7 +20,7 @@ public class QuizSession {
 
     private Long userId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "subject_id")
     private Subject subject;
 
@@ -29,7 +30,7 @@ public class QuizSession {
 
     private LocalDateTime startedAt;
     private LocalDateTime finishedAt;
-
     @OneToMany(mappedBy = "quizSession", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<QuizAttempt> attempts;
 }

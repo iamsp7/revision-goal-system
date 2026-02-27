@@ -1,128 +1,193 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { BookOpen, FileText, Target, TrendingUp } from "lucide-react";
+import { BookOpen, FileText, Target, TrendingUp, Calendar } from "lucide-react";
+import API from "../api/api";
+import {
+    LineChart,
+    Line,
+    XAxis,
+    YAxis,
+    Tooltip,
+    ResponsiveContainer,
+    CartesianGrid
+} from "recharts";
 
 function Dashboard() {
+
+    const [stats, setStats] = useState({
+        subjects: 0,
+        mcqs: 0,
+        accuracy: 0,
+        improvement: 0
+    });
+
+    const [trendData, setTrendData] = useState([]);
+    const [dueTopics, setDueTopics] = useState([]);
+
+    useEffect(() => {
+
+        const fetchDashboardData = async () => {
+            try {
+
+                // 🔹 Subjects
+                const subjectsRes = await API.get("/api/subjects");
+
+                // 🔹 Sessions
+                const sessionsRes = await API.get("/api/sessions/me");
+                const sessions = sessionsRes.data || [];
+
+                // 🔹 Daily Revision
+                const dueRes = await API.get("/api/revision/daily");
+                setDueTopics(dueRes.data || []);
+
+                let totalCorrect = 0;
+                let totalQuestions = 0;
+
+                sessions.forEach(s => {
+                    totalCorrect += s.correctAnswers || 0;
+                    totalQuestions += s.totalQuestions || 0;
+                });
+
+                const accuracy = totalQuestions > 0
+                    ? ((totalCorrect / totalQuestions) * 100).toFixed(1)
+                    : 0;
+
+                const improvement =
+                    sessions.length > 1
+                        ? (
+                            (sessions[sessions.length - 1].totalScore || 0) -
+                            (sessions[sessions.length - 2].totalScore || 0)
+                        ).toFixed(1)
+                        : 0;
+
+                const trend = sessions.slice(-5).map((s, index) => ({
+                    name: `Quiz ${index + 1}`,
+                    score: s.totalScore || 0
+                }));
+
+                setStats({
+                    subjects: subjectsRes.data.length,
+                    mcqs: totalQuestions,
+                    accuracy,
+                    improvement
+                });
+
+                setTrendData(trend);
+
+            } catch (err) {
+                console.error("Dashboard load error:", err);
+            }
+        };
+
+        fetchDashboardData();
+
+    }, []);
+
     return (
         <div className="min-h-screen bg-[#0B0F1A] text-white px-6 py-20">
+            <div className="max-w-6xl mx-auto">
 
-            <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="max-w-6xl mx-auto"
-            >
+                <h1 className="text-5xl font-extrabold mb-16">
+                    Dashboard
+                </h1>
 
-                {/* HEADER BLOCK */}
-                <div className="relative mb-20">
-
-                    {/* Accent bar */}
-                    <div className="absolute -left-6 top-2 w-1 h-16 bg-indigo-600 rounded-full"></div>
-
-                    <h1 className="text-5xl font-extrabold tracking-tight">
-                        Dashboard
-                    </h1>
-
-                    <p className="text-gray-400 mt-6 text-lg max-w-2xl leading-relaxed">
-                        Track performance. Identify weak areas. Optimize revision using intelligent AI feedback.
-                    </p>
-                </div>
-
-                {/* STATS GRID */}
-                <div className="grid md:grid-cols-4 gap-10">
+                {/* STATS */}
+                <div className="grid md:grid-cols-4 gap-10 mb-20">
 
                     {[
                         {
                             title: "Subjects",
-                            value: "12",
-                            icon: <BookOpen size={22} />,
-                            color: "from-indigo-600 to-indigo-800"
+                            value: stats.subjects,
+                            icon: <BookOpen size={22} />
                         },
                         {
-                            title: "MCQs Generated",
-                            value: "340",
-                            icon: <FileText size={22} />,
-                            color: "from-purple-600 to-purple-800"
+                            title: "Total Questions Attempted",
+                            value: stats.mcqs,
+                            icon: <FileText size={22} />
                         },
                         {
                             title: "Accuracy",
-                            value: "87%",
-                            icon: <Target size={22} />,
-                            color: "from-blue-600 to-blue-800"
+                            value: `${stats.accuracy}%`,
+                            icon: <Target size={22} />
                         },
                         {
                             title: "Improvement",
-                            value: "+12%",
-                            icon: <TrendingUp size={22} />,
-                            color: "from-emerald-600 to-emerald-800"
+                            value: `${stats.improvement}%`,
+                            icon: <TrendingUp size={22} />
                         }
                     ].map((item, index) => (
                         <motion.div
                             key={index}
                             whileHover={{ y: -8 }}
-                            whileTap={{ scale: 0.98 }}
-                            className="relative rounded-2xl overflow-hidden border border-[#2E3A59]"
+                            className="bg-[#1E293B] p-8 rounded-2xl border border-[#2E3A59]"
                         >
-                            {/* Top Accent Strip */}
-                            <div className={`h-2 bg-gradient-to-r ${item.color}`}></div>
-
-                            <div className="bg-[#1E293B] p-8">
-                                <div className="flex justify-between items-center mb-8">
-                                    <p className="text-gray-400 text-sm tracking-wide uppercase">
-                                        {item.title}
-                                    </p>
-                                    <div className="text-indigo-400">
-                                        {item.icon}
-                                    </div>
+                            <div className="flex justify-between mb-6">
+                                <p className="text-gray-400 text-sm uppercase">
+                                    {item.title}
+                                </p>
+                                <div className="text-indigo-400">
+                                    {item.icon}
                                 </div>
-
-                                <h2 className="text-4xl font-extrabold">
-                                    {item.value}
-                                </h2>
                             </div>
+
+                            <h2 className="text-4xl font-bold">
+                                {item.value}
+                            </h2>
                         </motion.div>
                     ))}
-
                 </div>
 
-                {/* SECTION SPACING */}
-                <div className="my-24"></div>
+                {/* PERFORMANCE TREND */}
+                <div className="bg-[#1E293B] p-10 rounded-2xl border border-[#2E3A59] mb-12">
+                    <h2 className="text-2xl font-bold mb-8">
+                        Performance Trend (Last 5 Quizzes)
+                    </h2>
 
-                {/* AI INSIGHT PANEL */}
-                <motion.div
-                    whileHover={{ y: -6 }}
-                    className="relative border border-indigo-600 rounded-2xl overflow-hidden"
-                >
+                    <ResponsiveContainer width="100%" height={300}>
+                        <LineChart data={trendData}>
+                            <CartesianGrid stroke="#2E3A59" />
+                            <XAxis dataKey="name" stroke="#aaa" />
+                            <YAxis stroke="#aaa" />
+                            <Tooltip />
+                            <Line
+                                type="monotone"
+                                dataKey="score"
+                                stroke="#6366F1"
+                                strokeWidth={3}
+                            />
+                        </LineChart>
+                    </ResponsiveContainer>
+                </div>
 
-                    {/* Left Highlight Panel */}
-                    <div className="absolute left-0 top-0 h-full w-2 bg-indigo-600"></div>
-
-                    <div className="bg-[#1E293B] p-12">
-
-                        <p className="text-indigo-400 text-sm tracking-widest mb-6">
-                            AI INSIGHT
-                        </p>
-
-                        <h3 className="text-2xl font-bold mb-4">
-                            You are weak in Data Normalization
-                        </h3>
-
-                        <p className="text-gray-400 mb-10 max-w-xl leading-relaxed">
-                            Your recent test performance shows low accuracy in normalization concepts.
-                            Focused practice can improve conceptual clarity significantly.
-                        </p>
-
-                        <motion.button
-                            whileHover={{ scale: 1.06 }}
-                            whileTap={{ scale: 0.95 }}
-                            className="bg-indigo-600 hover:bg-indigo-700 px-10 py-4 rounded-lg font-semibold transition shadow-lg shadow-indigo-800/40"
-                        >
-                            Generate 25 Targeted MCQs
-                        </motion.button>
-
+                {/* DAILY REVISION SECTION */}
+                <div className="bg-[#1E293B] p-10 rounded-2xl border border-[#2E3A59]">
+                    <div className="flex items-center gap-3 mb-6">
+                        <Calendar className="text-indigo-400" />
+                        <h2 className="text-2xl font-bold">
+                            Today's Revision
+                        </h2>
                     </div>
-                </motion.div>
 
-            </motion.div>
+                    {dueTopics.length === 0 ? (
+                        <p className="text-gray-400">
+                            🎉 No topics due today. You're ahead!
+                        </p>
+                    ) : (
+                        <div className="grid md:grid-cols-2 gap-6">
+                            {dueTopics.map((topic, index) => (
+                                <motion.div
+                                    key={index}
+                                    whileHover={{ scale: 1.03 }}
+                                    className="bg-[#0B0F1A] p-6 rounded-xl border border-indigo-500"
+                                >
+                                    📚 {topic}
+                                </motion.div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+            </div>
         </div>
     );
 }

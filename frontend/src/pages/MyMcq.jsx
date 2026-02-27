@@ -1,122 +1,109 @@
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { Trash2 } from "lucide-react";
 import API from "../api/api";
 
 function MyMcq() {
 
-    const [mcqs, setMcqs] = useState([]);
-    const [groupedBySubject, setGroupedBySubject] = useState({});
+    const [subjects, setSubjects] = useState([]);
     const [selectedSubject, setSelectedSubject] = useState(null);
+    const [mcqs, setMcqs] = useState([]);
+    const [deleteId, setDeleteId] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    const fetchMcqs = async () => {
+    // 🔥 Fetch Subjects First
+    const fetchSubjects = async () => {
         try {
-            const res = await API.get("/api/mcq");
-            setMcqs(res.data);
+            const res = await API.get("/api/subjects");
+            setSubjects(Array.isArray(res.data) ? res.data : []);
         } catch (err) {
-            console.error("Error fetching MCQs:", err);
+            console.error(err);
         } finally {
             setLoading(false);
         }
     };
 
-    useEffect(() => {
-        fetchMcqs();
-    }, []);
+    // 🔥 Fetch MCQs by Subject
+    const fetchMcqsBySubject = async (subjectId) => {
+        try {
+            const res = await API.get(`/api/mcq/subject/${subjectId}`);
+            setMcqs(Array.isArray(res.data) ? res.data : []);
+        } catch (err) {
+            console.error(err);
+        }
+    };
 
     useEffect(() => {
-        const grouped = mcqs.reduce((acc, mcq) => {
-            const subjectName = mcq.subject?.name || "Unknown Subject";
-            if (!acc[subjectName]) acc[subjectName] = [];
-            acc[subjectName].push(mcq);
-            return acc;
-        }, {});
-        setGroupedBySubject(grouped);
-    }, [mcqs]);
+        fetchSubjects();
+    }, []);
+
+    const confirmDelete = async () => {
+        if (!deleteId) return;
+
+        await API.delete(`/api/mcq/${deleteId}`);
+        setDeleteId(null);
+
+        // refresh current subject
+        fetchMcqsBySubject(selectedSubject.id);
+    };
 
     return (
         <div className="min-h-screen bg-[#0B0F1A] text-white px-6 py-16">
-
             <div className="max-w-6xl mx-auto space-y-16">
 
-                {/* Header */}
-                <div className="relative">
-                    <div className="absolute -left-6 top-2 w-1 h-14 bg-indigo-600 rounded-full"></div>
-                    <h1 className="text-4xl font-bold tracking-tight">
-                        My MCQs
-                    </h1>
-                    <p className="text-gray-400 mt-4">
-                        Review all generated MCQs grouped by subject.
-                    </p>
-                </div>
+                <h1 className="text-4xl font-bold">
+                    My MCQs
+                </h1>
 
-                {loading && (
-                    <p className="text-gray-400">Loading MCQs...</p>
-                )}
-
-                {!loading && Object.keys(groupedBySubject).length === 0 && (
-                    <div className="border border-[#2E3A59] bg-[#1E293B] p-10 rounded-2xl text-gray-400">
-                        No MCQs generated yet.
-                    </div>
-                )}
-
-                {/* ---------------- SUBJECT LIST ---------------- */}
+                {/* SUBJECT LIST */}
                 {!selectedSubject && !loading && (
                     <div className="grid md:grid-cols-3 gap-8">
-                        {Object.keys(groupedBySubject).map((subject, index) => (
+                        {subjects.map((sub) => (
                             <motion.div
-                                key={subject}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.05 }}
+                                key={sub.id}
                                 whileHover={{ y: -8 }}
-                                whileTap={{ scale: 0.98 }}
-                                onClick={() => setSelectedSubject(subject)}
+                                onClick={() => {
+                                    setSelectedSubject(sub);
+                                    fetchMcqsBySubject(sub.id);
+                                }}
                                 className="cursor-pointer border border-[#2E3A59] rounded-2xl overflow-hidden"
                             >
                                 <div className="h-2 bg-indigo-600"></div>
 
                                 <div className="bg-[#1E293B] p-8">
                                     <h2 className="text-xl font-semibold mb-2">
-                                        {subject}
+                                        {sub.name}
                                     </h2>
-
-                                    <p className="text-gray-400 text-sm">
-                                        {groupedBySubject[subject].length} MCQs
-                                    </p>
                                 </div>
                             </motion.div>
                         ))}
                     </div>
                 )}
 
-                {/* ---------------- SELECTED SUBJECT ---------------- */}
+                {/* MCQ LIST */}
                 {selectedSubject && (
                     <div className="space-y-10">
 
-                        {/* Back Button */}
-                        <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => setSelectedSubject(null)}
+                        <button
+                            onClick={() => {
+                                setSelectedSubject(null);
+                                setMcqs([]);
+                            }}
                             className="bg-[#1E293B] border border-[#2E3A59] px-6 py-3 rounded-lg hover:border-indigo-500 transition"
                         >
-                            ← Back to Subjects
-                        </motion.button>
+                            ← Back
+                        </button>
 
                         <h2 className="text-3xl font-bold text-indigo-400">
-                            {selectedSubject}
+                            {selectedSubject.name}
                         </h2>
 
-                        {/* MCQ List */}
                         <div className="space-y-8">
-                            {groupedBySubject[selectedSubject].map((mcq, index) => (
+                            {mcqs.map((mcq, index) => (
                                 <motion.div
                                     key={mcq.id}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: index * 0.03 }}
-                                    className="border border-[#2E3A59] rounded-2xl overflow-hidden"
+                                    whileHover={{ y: -4 }}
+                                    className="border border-[#2E3A59] rounded-2xl overflow-hidden relative group"
                                 >
                                     <div className="h-2 bg-indigo-600"></div>
 
@@ -135,6 +122,14 @@ function MyMcq() {
                                             Answer: {mcq.answer}
                                         </p>
                                     </div>
+
+                                    {/* Delete Icon */}
+                                    <button
+                                        onClick={() => setDeleteId(mcq.id)}
+                                        className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition"
+                                    >
+                                        <Trash2 className="w-5 h-5 text-red-500 hover:text-red-600" />
+                                    </button>
                                 </motion.div>
                             ))}
                         </div>
@@ -143,6 +138,50 @@ function MyMcq() {
                 )}
 
             </div>
+
+            {/* DELETE MODAL */}
+            <AnimatePresence>
+                {deleteId && (
+                    <motion.div
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.8, opacity: 0 }}
+                            className="bg-[#1E293B] p-8 rounded-2xl w-96 border border-[#2E3A59]"
+                        >
+                            <h2 className="text-xl font-semibold mb-4">
+                                Delete MCQ?
+                            </h2>
+
+                            <p className="text-gray-400 mb-6 text-sm">
+                                This action cannot be undone.
+                            </p>
+
+                            <div className="flex justify-end gap-4">
+                                <button
+                                    onClick={() => setDeleteId(null)}
+                                    className="px-4 py-2 rounded-lg bg-gray-600 hover:bg-gray-700"
+                                >
+                                    Cancel
+                                </button>
+
+                                <button
+                                    onClick={confirmDelete}
+                                    className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700"
+                                >
+                                    Delete
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
         </div>
     );
 }

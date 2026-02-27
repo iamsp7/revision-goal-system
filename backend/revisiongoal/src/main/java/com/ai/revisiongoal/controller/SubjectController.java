@@ -31,4 +31,8 @@ public class SubjectController {
     public List<Subject> getMySubjects(Authentication authentication) {
         return subjectService.getUserSubjects(authentication.getName());
     }
+    @DeleteMapping("/{id}")
+    public void deleteSubject(@PathVariable Long id) {
+        subjectService.deleteSubject(id);
+    }
 }

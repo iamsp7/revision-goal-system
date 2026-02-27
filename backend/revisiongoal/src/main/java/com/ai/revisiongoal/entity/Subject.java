@@ -2,7 +2,10 @@ package com.ai.revisiongoal.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import java.util.List;
 
 @Entity
 @Getter
@@ -21,5 +24,10 @@ public class Subject {
 
     private String description;
 
-    private String createdBy; // user email
+    private String createdBy;
+
+    // 🔥 VERY IMPORTANT
+    @OneToMany(mappedBy = "subject", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<MCQQuestion> mcqs;
 }

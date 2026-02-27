@@ -2,10 +2,11 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Brain, Target, TrendingUp } from "lucide-react";
 import { Typewriter } from "react-simple-typewriter";
-import Particles from "react-tsparticles";
-import { loadFull } from "tsparticles";
 import Tilt from "react-parallax-tilt";
 import { useRef } from "react";
+import Particles from "@tsparticles/react";
+import { loadSlim } from "@tsparticles/slim";
+import logo from "../assets/logo.png";
 
 function Landing() {
     const navigate = useNavigate();
@@ -18,8 +19,9 @@ function Landing() {
 
     const y = useTransform(scrollYProgress, [0, 1], ["0%", "20%"]);
 
-    const particlesInit = async (main) => {
-        await loadFull(main);
+    // ✅ FIXED PARTICLES (No more loadFull error)
+    const particlesInit = async (engine) => {
+        await loadSlim(engine);
     };
 
     const fadeUp = {
@@ -30,16 +32,26 @@ function Landing() {
     return (
         <div ref={ref} className="relative bg-[#0B0F1A] text-white overflow-hidden">
 
-            {/* MARKETING NAVBAR */}
+            {/* ================= NAVBAR ================= */}
             <nav className="sticky top-0 z-50 bg-[#0B0F1A] border-b border-[#2E3A59] px-6 lg:px-16 py-4 flex justify-between items-center">
 
-                <h2
+                {/* Logo + Brand */}
+                <div
                     onClick={() => navigate("/")}
-                    className="text-xl font-bold cursor-pointer tracking-tight"
+                    className="flex items-center gap-3 cursor-pointer group"
                 >
-                    StudyBeacon
-                </h2>
+                    <img
+                        src={logo}
+                        alt="StudyBeacon Logo"
+                        className="w-10 h-10 object-contain"
+                    />
 
+                    <span className="text-xl font-bold tracking-tight transition group-hover:text-indigo-400">
+                        StudyBeacon
+                    </span>
+                </div>
+
+                {/* Right Buttons */}
                 <div className="flex items-center gap-6">
 
                     <button
@@ -61,7 +73,9 @@ function Landing() {
                 </div>
             </nav>
 
-            {/* Solid Gradient Blobs */}
+            {/* ================= BACKGROUND EFFECTS ================= */}
+
+            {/* Gradient Blobs */}
             <motion.div
                 style={{ y }}
                 className="absolute -top-40 -left-40 w-[450px] h-[450px] bg-indigo-700 rounded-full opacity-20"
@@ -89,7 +103,7 @@ function Landing() {
                 }}
             />
 
-            {/* HERO */}
+            {/* ================= HERO ================= */}
             <section className="min-h-screen flex flex-col items-center justify-center text-center px-6 lg:px-16">
 
                 <motion.div
@@ -99,7 +113,7 @@ function Landing() {
                     transition={{ duration: 0.8 }}
                 >
                     <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight max-w-4xl mx-auto">
-                        StudyBeacon  <br />
+                        StudyBeacon <br />
                         <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-500 bg-clip-text text-transparent">
                             <Typewriter
                                 words={[
@@ -133,7 +147,7 @@ function Landing() {
                 </motion.div>
             </section>
 
-            {/* FEATURES */}
+            {/* ================= FEATURES ================= */}
             <section className="py-32 px-6 lg:px-20 bg-[#0F172A]">
 
                 <motion.div
@@ -192,7 +206,7 @@ function Landing() {
                 </motion.div>
             </section>
 
-            {/* FINAL CTA */}
+            {/* ================= FINAL CTA ================= */}
             <section className="py-32 text-center px-6 bg-[#0B0F1A]">
                 <motion.div
                     initial="hidden"

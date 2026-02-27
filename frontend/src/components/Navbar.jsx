@@ -1,7 +1,7 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { LogOut } from "lucide-react";
 import { motion } from "framer-motion";
-
+import StudyBeacon from "../assets/StudyBeacon.png";
 function Navbar() {
     const navigate = useNavigate();
     const location = useLocation();
@@ -19,20 +19,31 @@ function Navbar() {
             <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
 
                 {/* Logo */}
-                <h2
+                <div
                     onClick={() => navigate("/dashboard")}
-                    className="text-2xl font-bold text-white cursor-pointer tracking-tight hover:text-indigo-400 transition"
+                    className="flex items-center gap-3 cursor-pointer group"
                 >
-                    StudyBeacon
-                </h2>
+                    {/* Logo */}
+                    <img
+                        src={StudyBeacon}
+                        alt="StudyBeacon Logo"
+                        className="w-10 h-10 object-contain"
+                    />
+
+                    {/* Text */}
+                    <h2 className="text-2xl font-bold text-white tracking-tight transition group-hover:text-indigo-400">
+                        StudyBeacon
+                    </h2>
+                </div>
 
                 {/* Links */}
                 <div className="flex items-center gap-3">
 
                     {[
-                        { label: "Dashboard", path: "/dashboard" },
+
                         { label: "Subjects", path: "/subjects" },
                         { label: "My MCQs", path: "/my-mcqs" },
+                        { label: "Quiz", path: "/quiz" },
                     ].map((item) => (
                         <motion.button
                             key={item.path}

@@ -7,6 +7,9 @@ import SubjectDetail from "./pages/SubjectDetail";
 import MyMcq from "./pages/MyMcq";
 import Landing from "./pages/Landing";
 import Navbar from "./components/Navbar";
+import QuizAttempt from "./pages/QuizAttempt";
+import QuizSubjects from "./pages/QuizSubjects";
+
 
 /* ---------------- Auth Helpers ---------------- */
 
@@ -38,7 +41,12 @@ const Layout = ({ children }) => {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-[#0B0F1A] text-white">
+      <div className="
+  min-h-screen
+  bg-gray-50 text-gray-900
+  dark:bg-[#0B0F1A] dark:text-white
+  transition-colors duration-300
+">
         {children}
       </div>
     </>
@@ -118,6 +126,31 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+        {/* Quiz Base Page (Subject List) */}
+        <Route
+          path="/quiz"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <QuizSubjects />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Quiz Attempt Page */}
+        <Route
+          path="/quiz/:id"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <QuizAttempt />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

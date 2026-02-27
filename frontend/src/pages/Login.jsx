@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import API from "../api/api";
+import StudyBeacon from "../assets/StudyBeacon.png";
 
 function Login() {
     const navigate = useNavigate();
@@ -49,8 +50,12 @@ function Login() {
         try {
             setSubmitting(true);
             const res = await API.post("/api/users/login", form);
-            localStorage.setItem("token", res.data.token);
-            navigate("/");
+            const token = res.data.token;
+
+            localStorage.setItem("token", token);
+
+            navigate("/dashboard");
+
         } catch (err) {
             setErrors({ general: "Invalid credentials" });
         } finally {
@@ -59,19 +64,18 @@ function Login() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-[#0B0F1A] px-6">
+        <div className="min-h-screen flex bg-[#0B0F1A]">
 
-            <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4 }}
-                className="w-full max-w-md border border-[#2E3A59] rounded-2xl overflow-hidden"
-            >
-                {/* Accent Strip */}
-                <div className="h-2 bg-indigo-600"></div>
+            {/* LEFT FORM AREA */}
+            <div className="w-full lg:w-1/2 flex items-center justify-center px-6 relative overflow-hidden">
 
-                <div className="bg-[#1E293B] p-10">
-
+                <motion.div
+                    initial={{ x: -80, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    exit={{ x: 80, opacity: 0 }}
+                    transition={{ duration: 0.4 }}
+                    className="absolute w-full max-w-md bg-[#111827] border border-[#1F2937] rounded-2xl p-10 shadow-xl"
+                >
                     <h2 className="text-3xl font-bold text-white mb-2">
                         Welcome Back
                     </h2>
@@ -88,7 +92,6 @@ function Login() {
 
                     <form onSubmit={handleSubmit} className="space-y-6">
 
-                        {/* Email */}
                         <div>
                             <label className="block text-sm text-gray-300 mb-2">
                                 Email
@@ -99,10 +102,8 @@ function Login() {
                                 value={form.email}
                                 onChange={handleChange}
                                 placeholder="Enter your email"
-                                className={`w-full px-4 py-3 rounded-lg bg-[#0B0F1A] text-white placeholder-gray-500 border ${errors.email
-                                    ? "border-red-500"
-                                    : "border-[#2E3A59]"
-                                    } focus:outline-none focus:border-indigo-500 transition`}
+                                className={`w-full px-4 py-3 rounded-lg bg-[#0B0F1A] text-white border ${errors.email ? "border-red-500" : "border-gray-700"
+                                    } focus:outline-none focus:ring-2 focus:ring-indigo-500 transition`}
                             />
                             {errors.email && (
                                 <p className="text-red-400 text-sm mt-2">
@@ -111,7 +112,6 @@ function Login() {
                             )}
                         </div>
 
-                        {/* Password */}
                         <div>
                             <label className="block text-sm text-gray-300 mb-2">
                                 Password
@@ -122,10 +122,8 @@ function Login() {
                                 value={form.password}
                                 onChange={handleChange}
                                 placeholder="Enter your password"
-                                className={`w-full px-4 py-3 rounded-lg bg-[#0B0F1A] text-white placeholder-gray-500 border ${errors.password
-                                    ? "border-red-500"
-                                    : "border-[#2E3A59]"
-                                    } focus:outline-none focus:border-indigo-500 transition`}
+                                className={`w-full px-4 py-3 rounded-lg bg-[#0B0F1A] text-white border ${errors.password ? "border-red-500" : "border-gray-700"
+                                    } focus:outline-none focus:ring-2 focus:ring-indigo-500 transition`}
                             />
                             {errors.password && (
                                 <p className="text-red-400 text-sm mt-2">
@@ -139,14 +137,10 @@ function Login() {
                             whileTap={{ scale: 0.97 }}
                             type="submit"
                             disabled={submitting}
-                            className={`w-full font-semibold py-3 rounded-lg transition ${submitting
-                                ? "bg-indigo-800 cursor-not-allowed"
-                                : "bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-800/40"
-                                }`}
+                            className="w-full bg-indigo-600 hover:bg-indigo-700 py-3 rounded-lg font-semibold transition shadow-md shadow-indigo-900/40"
                         >
                             {submitting ? "Signing In..." : "Sign In"}
                         </motion.button>
-
                     </form>
 
                     <p className="text-gray-400 text-center mt-8 text-sm">
@@ -158,9 +152,23 @@ function Login() {
                             Create one
                         </Link>
                     </p>
+                </motion.div>
+            </div>
 
+            {/* RIGHT HERO */}
+            <div className="hidden lg:flex w-1/2 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-700 via-indigo-800 to-[#0B0F1A]" />
+                <div className="relative z-10 flex flex-col justify-center px-20 text-white">
+                    <h1 className="text-5xl font-extrabold mb-6">
+                        StudyBeacon
+                    </h1>
+                    <p className="text-lg text-indigo-200 max-w-md">
+                        Track progress. Identify weak topics. Master concepts smarter.
+                        Your AI-powered revision partner.
+                    </p>
                 </div>
-            </motion.div>
+                <div className="absolute bottom-0 w-full h-40 bg-[#0B0F1A] rounded-t-[100%]" />
+            </div>
 
         </div>
     );

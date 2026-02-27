@@ -22,4 +22,7 @@ public class SubjectService {
     public List<Subject> getUserSubjects(String email) {
         return subjectRepository.findByCreatedBy(email);
     }
+    public void deleteSubject(Long id) {
+        subjectRepository.deleteById(id);
+    }
 }
