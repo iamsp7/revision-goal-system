@@ -151,7 +151,6 @@ public class MCQController {
         this.subjectRepository = subjectRepository;
     }
 
-    // ================= GENERATE FROM PDF =================
     @PostMapping("/generate-from-pdf")
     public ResponseEntity<?> generateFromPdf(
             @RequestParam("file") MultipartFile file,
@@ -159,9 +158,13 @@ public class MCQController {
     ) throws Exception {
 
         String result = mcqGenerationService.generateFromPdf(file);
+
+        System.out.println("==== FASTAPI RESPONSE ====");
+        System.out.println(result);
+        System.out.println("==========================");
+
         return saveMcqsToDatabase(result, subjectId, "PDF Upload");
     }
-
     // ================= GENERATE FROM TOPIC =================
     @PostMapping("/generate-from-topic")
     public ResponseEntity<?> generateFromTopic(
@@ -184,36 +187,6 @@ public class MCQController {
         return saveMcqsToDatabase(result, subjectId, "Website Content");
     }
 
-    // ================= ADD MANUAL =================
-    @PostMapping
-    public MCQQuestion addMCQ(@RequestBody MCQQuestion mcq) {
-        return mcqService.addMCQ(mcq);
-    }
-
-    // ================= GET ALL =================
-    @GetMapping
-    public List<MCQQuestion> getAllMCQs() {
-        return mcqService.getAllMCQs();
-    }
-
-    // ================= GET BY SUBJECT =================
-    @GetMapping("/subject/{subjectId}")
-    public List<MCQQuestion> getBySubject(@PathVariable Long subjectId) {
-        return mcqService.getMcqsBySubject(subjectId);
-    }
-
-    // ================= DELETE SINGLE MCQ =================
-    @DeleteMapping("/{id}")
-    public void deleteMcq(@PathVariable Long id) {
-        mcqService.deleteMcq(id);
-    }
-
-    // ================= DELETE ALL MCQS OF SUBJECT =================
-    @DeleteMapping("/subject/{subjectId}")
-    public void deleteAllBySubject(@PathVariable Long subjectId) {
-        mcqService.deleteBySubject(subjectId);
-    }
-
     // ================= COMMON SAVE METHOD =================
     private ResponseEntity<?> saveMcqsToDatabase(
             String result,
@@ -222,11 +195,31 @@ public class MCQController {
     ) throws Exception {
 
         ObjectMapper mapper = new ObjectMapper();
-        JsonNode root = mapper.readTree(result);
+
+        // 🔥 STEP 1: CLEAN RESPONSE
+        int start = result.indexOf("{");
+        int end = result.lastIndexOf("}");
+
+        if (start == -1 || end == -1) {
+            return ResponseEntity.badRequest().body("Invalid AI response format");
+        }
+
+        String cleanJson = result.substring(start, end + 1);
+
+        // 🔥 STEP 2: SAFE PARSE
+        JsonNode root;
+        try {
+            root = mapper.readTree(cleanJson);
+        } catch (Exception e) {
+            System.out.println("JSON PARSE ERROR: " + e.getMessage());
+            System.out.println("RAW RESPONSE: " + result);
+            return ResponseEntity.badRequest().body("Invalid JSON format from AI");
+        }
+
         JsonNode mcqArray = root.get("mcqs");
 
         if (mcqArray == null || !mcqArray.isArray()) {
-            return ResponseEntity.badRequest().body("Invalid MCQ format received");
+            return ResponseEntity.badRequest().body("Invalid MCQ structure");
         }
 
         Subject subject = subjectRepository.findById(subjectId)
@@ -251,5 +244,10 @@ public class MCQController {
         }
 
         return ResponseEntity.ok(savedMcqs);
+    }
+ // ================= GET BY SUBJECT =================
+    @GetMapping("/subject/{subjectId}")
+    public List<MCQQuestion> getBySubject(@PathVariable Long subjectId) {
+        return mcqService.getMcqsBySubject(subjectId);
     }
 }

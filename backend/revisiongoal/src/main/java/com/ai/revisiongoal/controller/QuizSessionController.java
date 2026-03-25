@@ -6,6 +6,7 @@ import org.springframework.security.core.Authentication;
 import com.ai.revisiongoal.entity.QuizSession;
 import com.ai.revisiongoal.entity.User;
 import com.ai.revisiongoal.service.QuizSessionService;
+import com.ai.revisiongoal.service.RevisionService;
 import com.ai.revisiongoal.repository.UserRepository;
 
 import java.time.LocalDateTime;
@@ -18,11 +19,16 @@ public class QuizSessionController {
 
     private final QuizSessionService service;
     private final UserRepository userRepository;
+    private final RevisionService revisionService;
 
-    public QuizSessionController(QuizSessionService service,
-                                 UserRepository userRepository) {
+    public QuizSessionController(
+            QuizSessionService service,
+            UserRepository userRepository,
+            RevisionService revisionService
+    ) {
         this.service = service;
         this.userRepository = userRepository;
+        this.revisionService = revisionService;
     }
 
     @PostMapping("/start")
@@ -37,6 +43,11 @@ public class QuizSessionController {
         session.setUserId(user.getId());
         session.setStartedAt(LocalDateTime.now());
 
+        // 🔥 ADD THIS LINE (VERY IMPORTANT)
+        if (session.getTopic() == null || session.getTopic().isEmpty()) {
+            session.setTopic(session.getSubject().getName());
+        }
+
         return service.startSession(session);
     }
 
@@ -47,7 +58,32 @@ public class QuizSessionController {
             @RequestParam int correctAnswers,
             @RequestParam double totalScore
     ) {
-        return service.finishSession(sessionId, totalQuestions, correctAnswers, totalScore);
+
+        QuizSession session = service.finishSession(
+                sessionId,
+                totalQuestions,
+                correctAnswers,
+                totalScore
+        );
+
+        // 🔥 CALCULATE ACCURACY
+        double accuracy = totalQuestions > 0
+                ? (correctAnswers * 100.0) / totalQuestions
+                : 0;
+
+        // 🔥 GET DATA
+        String topic = session.getTopic();
+        String subjectName = session.getSubject().getName();
+
+        // 🔥 MAIN FIX (THIS WAS MISSING)
+        revisionService.updateAfterQuiz(
+                session.getUserId(),
+                topic,
+                subjectName,
+                accuracy
+        );
+
+        return session;
     }
 
     @GetMapping("/me")

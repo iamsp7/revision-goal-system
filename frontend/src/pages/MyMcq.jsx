@@ -124,12 +124,12 @@ function MyMcq() {
                                     </div>
 
                                     {/* Delete Icon */}
-                                    <button
+                                    {/* <button
                                         onClick={() => setDeleteId(mcq.id)}
                                         className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition"
                                     >
                                         <Trash2 className="w-5 h-5 text-red-500 hover:text-red-600" />
-                                    </button>
+                                    </button> */}
                                 </motion.div>
                             ))}
                         </div>
@@ -140,7 +140,7 @@ function MyMcq() {
             </div>
 
             {/* DELETE MODAL */}
-            <AnimatePresence>
+            {/* <AnimatePresence>
                 {deleteId && (
                     <motion.div
                         className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50"
@@ -180,7 +180,7 @@ function MyMcq() {
                         </motion.div>
                     </motion.div>
                 )}
-            </AnimatePresence>
+            </AnimatePresence> */}
 
         </div>
     );

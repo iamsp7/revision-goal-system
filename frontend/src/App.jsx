@@ -9,6 +9,7 @@ import Landing from "./pages/Landing";
 import Navbar from "./components/Navbar";
 import QuizAttempt from "./pages/QuizAttempt";
 import QuizSubjects from "./pages/QuizSubjects";
+import Recommendation from "./pages/Recommendation";
 
 
 /* ---------------- Auth Helpers ---------------- */
@@ -150,6 +151,17 @@ function App() {
             </ProtectedRoute>
           }
         />
+        {/* Recommendation Page */}
+        <Route
+          path="/recommendation/:topic"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Recommendation />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />  
 
 
         {/* Fallback */}

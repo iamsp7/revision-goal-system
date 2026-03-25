@@ -6,7 +6,7 @@ import Tilt from "react-parallax-tilt";
 import { useRef } from "react";
 import Particles from "@tsparticles/react";
 import { loadSlim } from "@tsparticles/slim";
-import logo from "../assets/logo.png";
+import StudyBeacon from "../assets/StudyBeacon.png";
 
 function Landing() {
     const navigate = useNavigate();
@@ -41,7 +41,7 @@ function Landing() {
                     className="flex items-center gap-3 cursor-pointer group"
                 >
                     <img
-                        src={logo}
+                        src={StudyBeacon}
                         alt="StudyBeacon Logo"
                         className="w-10 h-10 object-contain"
                     />

@@ -16,4 +16,15 @@ public interface TopicRevisionStateRepository
             Long userId,
             LocalDateTime date
     );
+    
+    List<TopicRevisionState> findByUserIdAndNextReviewBefore(Long userId, LocalDateTime date);
+    
+    List<TopicRevisionState> findByUserIdAndNextReviewBeforeAndMasteredFalse(
+            Long userId,
+            LocalDateTime date
+    );
+    List<TopicRevisionState> findByUserIdAndNextReviewLessThanEqualAndMasteredFalse(
+            Long userId,
+            LocalDateTime date
+    );
 }

@@ -27,23 +27,46 @@ public class DailyRevisionController {
         this.userRepository = userRepository;
     }
 
-    @GetMapping("/daily")
-    public List<String> getDailyRevision(Authentication authentication) {
+    public record RevisionDTO(String topic, String subject) {}
+    @DeleteMapping("/delete")
+    public String deleteTopic(
+            @RequestParam String topic,
+            Authentication authentication
+    ) {
 
-        // 🔥 authentication.getName() is EMAIL
+        String email = authentication.getName();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        TopicRevisionState state = revisionRepository
+                .findByUserIdAndTopic(user.getId(), topic)
+                .orElseThrow(() -> new RuntimeException("Topic not found"));
+
+        revisionRepository.delete(state);
+
+        return "Deleted successfully";
+    }
+
+    @GetMapping("/daily")
+    public List<RevisionDTO> getDailyRevision(Authentication authentication) {
+
         String email = authentication.getName();
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         List<TopicRevisionState> dueTopics =
-                revisionRepository.findByUserIdAndNextReviewLessThanEqual(
+                revisionRepository.findByUserIdAndNextReviewLessThanEqualAndMasteredFalse(
                         user.getId(),
                         LocalDateTime.now()
                 );
 
         return dueTopics.stream()
-                .map(TopicRevisionState::getTopic)
+                .map(t -> new RevisionDTO(
+                        t.getTopic(),
+                        t.getSubject() != null ? t.getSubject().getName() : "General"
+                ))
                 .toList();
     }
 }

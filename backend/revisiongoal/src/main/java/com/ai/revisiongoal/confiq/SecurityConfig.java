@@ -24,9 +24,12 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Public APIs
                 .requestMatchers("/api/users/register", "/api/users/login").permitAll()
-
+                .requestMatchers  ("/api/recommend/**").permitAll()
                 // Everything else under /api requires authentication
                 .requestMatchers("/api/**").authenticated()
+                
+               
+
 
                 // Allow everything else
                 .anyRequest().permitAll()

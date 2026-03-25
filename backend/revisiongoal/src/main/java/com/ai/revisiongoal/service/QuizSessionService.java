@@ -49,31 +49,28 @@ public class QuizSessionService {
             int correctAnswers,
             double totalScore) {
 
-QuizSession session = repository.findById(sessionId)
-.orElseThrow(() -> new RuntimeException("Session not found"));
+        QuizSession session = repository.findById(sessionId)
+                .orElseThrow(() -> new RuntimeException("Session not found"));
 
-session.setFinishedAt(LocalDateTime.now());
-session.setTotalQuestions(totalQuestions);
-session.setCorrectAnswers(correctAnswers);
-session.setTotalScore(totalScore);
+        session.setFinishedAt(LocalDateTime.now());
+        session.setTotalQuestions(totalQuestions);
+        session.setCorrectAnswers(correctAnswers);
+        session.setTotalScore(totalScore);
 
-repository.save(session);
+        repository.save(session);
 
-double accuracy = totalQuestions == 0
-? 0
-: ((double) correctAnswers / totalQuestions) * 100;
+        double accuracy = totalQuestions == 0
+                ? 0
+                : ((double) correctAnswers / totalQuestions) * 100;
 
-// 🔥 SAFE SUBJECT FETCH
-Long subjectId = session.getSubject().getId();
+        String topic = session.getSubject() != null
+                ? session.getSubject().getName()
+                : "Unknown";
 
-String topic = repository.findById(sessionId)
-.map(s -> s.getSubject().getName())
-.orElse("Unknown");
+        updateSpacedRepetition(session.getUserId(), topic, accuracy);
 
-updateSpacedRepetition(session.getUserId(), topic, accuracy);
-
-return session;
-}
+        return session;
+    }
     // =========================
     // Update Spaced Repetition
     // =========================

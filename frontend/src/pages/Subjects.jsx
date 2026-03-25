@@ -108,7 +108,7 @@ function Subjects() {
                             </div>
 
                             {/* Delete Icon */}
-                            <button
+                            {/* <button
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     setDeleteId(sub.id);
@@ -116,7 +116,7 @@ function Subjects() {
                                 className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition"
                             >
                                 <Trash2 className="w-5 h-5 text-red-500 hover:text-red-600" />
-                            </button>
+                            </button> */}
                         </motion.div>
                     ))}
                 </div>

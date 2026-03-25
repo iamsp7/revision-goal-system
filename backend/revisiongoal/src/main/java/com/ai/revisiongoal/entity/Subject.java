@@ -26,8 +26,18 @@ public class Subject {
 
     private String createdBy;
 
-    // 🔥 VERY IMPORTANT
+    // MCQs linked to subject
     @OneToMany(mappedBy = "subject", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<MCQQuestion> mcqs;
+
+    // Quiz sessions linked to subject
+    @OneToMany(mappedBy = "subject", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<QuizSession> quizSessions;
+
+    // 🔥 ADD THIS (IMPORTANT FOR YOUR FIX)
+    @OneToMany(mappedBy = "subject")
+    @JsonIgnore
+    private List<TopicRevisionState> topicRevisionStates;
 }

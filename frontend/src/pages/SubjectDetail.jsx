@@ -15,17 +15,20 @@ function SubjectDetail() {
     const [topicLoading, setTopicLoading] = useState(false);
     const [linkLoading, setLinkLoading] = useState(false);
 
+    // ✅ FIXED API CALL
     const fetchMcqs = async () => {
-        const res = await API.get("/api/mcq");
-        const filtered = res.data.filter(
-            (mcq) => mcq.subject?.id === parseInt(id)
-        );
-        setMcqs(filtered);
+        try {
+            const res = await API.get(`/api/mcq/subject/${id}`);
+            setMcqs(res.data);
+        } catch (err) {
+            console.error("Fetch MCQ Error:", err);
+            alert("Failed to load MCQs");
+        }
     };
 
     useEffect(() => {
         fetchMcqs();
-    }, []);
+    }, [id]);
 
     const handlePdfGenerate = async () => {
         if (!file) return alert("Select a PDF first");
@@ -34,11 +37,16 @@ function SubjectDetail() {
         formData.append("file", file);
         formData.append("subjectId", id);
 
-        setPdfLoading(true);
-        await API.post("/api/mcq/generate-from-pdf", formData);
-        setPdfLoading(false);
-
-        fetchMcqs();
+        try {
+            setPdfLoading(true);
+            await API.post("/api/mcq/generate-from-pdf", formData);
+        } catch (err) {
+            console.error("PDF Error:", err);
+            alert("PDF generation failed");
+        } finally {
+            setPdfLoading(false);
+            fetchMcqs();
+        }
     };
 
     const handleTopicGenerate = async () => {
@@ -48,12 +56,17 @@ function SubjectDetail() {
         formData.append("subjectId", id);
         formData.append("topic", topic);
 
-        setTopicLoading(true);
-        await API.post("/api/mcq/generate-from-topic", formData);
-        setTopicLoading(false);
-
-        setTopic("");
-        fetchMcqs();
+        try {
+            setTopicLoading(true);
+            await API.post("/api/mcq/generate-from-topic", formData);
+        } catch (err) {
+            console.error("Topic Error:", err);
+            alert("Topic generation failed");
+        } finally {
+            setTopicLoading(false);
+            setTopic("");
+            fetchMcqs();
+        }
     };
 
     const handleLinkGenerate = async () => {
@@ -63,17 +76,21 @@ function SubjectDetail() {
         formData.append("subjectId", id);
         formData.append("link", link);
 
-        setLinkLoading(true);
-        await API.post("/api/mcq/generate-from-link", formData);
-        setLinkLoading(false);
-
-        setLink("");
-        fetchMcqs();
+        try {
+            setLinkLoading(true);
+            await API.post("/api/mcq/generate-from-link", formData);
+        } catch (err) {
+            console.error("Link Error:", err);
+            alert("Link generation failed");
+        } finally {
+            setLinkLoading(false);
+            setLink("");
+            fetchMcqs();
+        }
     };
 
     return (
         <div className="min-h-screen bg-[#0B0F1A] text-white px-6 py-16">
-
             <div className="max-w-6xl mx-auto space-y-20">
 
                 {/* Header */}
@@ -88,16 +105,10 @@ function SubjectDetail() {
                 <div className="grid md:grid-cols-3 gap-10">
 
                     {/* PDF */}
-                    <motion.div
-                        whileHover={{ y: -6 }}
-                        className="border border-[#2E3A59] rounded-2xl overflow-hidden"
-                    >
+                    <motion.div whileHover={{ y: -6 }} className="border border-[#2E3A59] rounded-2xl overflow-hidden">
                         <div className="h-2 bg-indigo-600"></div>
-
                         <div className="bg-[#1E293B] p-8 space-y-6">
-                            <h2 className="text-xl font-semibold">
-                                Generate from PDF
-                            </h2>
+                            <h2 className="text-xl font-semibold">Generate from PDF</h2>
 
                             <input
                                 type="file"
@@ -110,7 +121,7 @@ function SubjectDetail() {
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                                 onClick={handlePdfGenerate}
-                                className="w-full bg-indigo-600 hover:bg-indigo-700 py-3 rounded-lg font-semibold transition"
+                                className="w-full bg-indigo-600 hover:bg-indigo-700 py-3 rounded-lg font-semibold"
                             >
                                 {pdfLoading ? "Generating..." : "Generate MCQs"}
                             </motion.button>
@@ -118,16 +129,10 @@ function SubjectDetail() {
                     </motion.div>
 
                     {/* Topic */}
-                    <motion.div
-                        whileHover={{ y: -6 }}
-                        className="border border-[#2E3A59] rounded-2xl overflow-hidden"
-                    >
+                    <motion.div whileHover={{ y: -6 }} className="border border-[#2E3A59] rounded-2xl overflow-hidden">
                         <div className="h-2 bg-indigo-600"></div>
-
                         <div className="bg-[#1E293B] p-8 space-y-6">
-                            <h2 className="text-xl font-semibold">
-                                Generate from Topic
-                            </h2>
+                            <h2 className="text-xl font-semibold">Generate from Topic</h2>
 
                             <input
                                 value={topic}
@@ -140,7 +145,7 @@ function SubjectDetail() {
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                                 onClick={handleTopicGenerate}
-                                className="w-full bg-indigo-600 hover:bg-indigo-700 py-3 rounded-lg font-semibold transition"
+                                className="w-full bg-indigo-600 hover:bg-indigo-700 py-3 rounded-lg font-semibold"
                             >
                                 {topicLoading ? "Generating..." : "Generate MCQs"}
                             </motion.button>
@@ -148,16 +153,10 @@ function SubjectDetail() {
                     </motion.div>
 
                     {/* Link */}
-                    <motion.div
-                        whileHover={{ y: -6 }}
-                        className="border border-[#2E3A59] rounded-2xl overflow-hidden"
-                    >
+                    <motion.div whileHover={{ y: -6 }} className="border border-[#2E3A59] rounded-2xl overflow-hidden">
                         <div className="h-2 bg-indigo-600"></div>
-
                         <div className="bg-[#1E293B] p-8 space-y-6">
-                            <h2 className="text-xl font-semibold">
-                                Generate from Website
-                            </h2>
+                            <h2 className="text-xl font-semibold">Generate from Website</h2>
 
                             <input
                                 value={link}
@@ -170,7 +169,7 @@ function SubjectDetail() {
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                                 onClick={handleLinkGenerate}
-                                className="w-full bg-indigo-600 hover:bg-indigo-700 py-3 rounded-lg font-semibold transition"
+                                className="w-full bg-indigo-600 hover:bg-indigo-700 py-3 rounded-lg font-semibold"
                             >
                                 {linkLoading ? "Generating..." : "Generate MCQs"}
                             </motion.button>
@@ -181,10 +180,7 @@ function SubjectDetail() {
 
                 {/* MCQs */}
                 <div className="space-y-8">
-
-                    <h2 className="text-3xl font-bold">
-                        Generated MCQs
-                    </h2>
+                    <h2 className="text-3xl font-bold">Generated MCQs</h2>
 
                     {mcqs.map((mcq, index) => (
                         <motion.div
@@ -212,7 +208,6 @@ function SubjectDetail() {
                             </div>
                         </motion.div>
                     ))}
-
                 </div>
 
             </div>
