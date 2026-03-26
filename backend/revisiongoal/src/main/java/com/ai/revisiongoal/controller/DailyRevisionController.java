@@ -57,9 +57,8 @@ public class DailyRevisionController {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         List<TopicRevisionState> dueTopics =
-                revisionRepository.findByUserIdAndNextReviewLessThanEqualAndMasteredFalse(
-                        user.getId(),
-                        LocalDateTime.now()
+                revisionRepository.findByUserIdAndMasteredFalse(
+                        user.getId()
                 );
 
         return dueTopics.stream()

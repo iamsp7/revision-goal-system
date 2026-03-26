@@ -667,6 +667,10 @@ import os
 import re
 from bs4 import BeautifulSoup
 
+
+OLLAMA_URL = "http://localhost:11434/api/generate"
+MODEL_NAME = "mistral"
+
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -681,11 +685,11 @@ router = APIRouter()
 
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY") or "AIzaSyDLoJXfLCNxmoVD8c0G5jTqXX17Rt9epmk"
 
-def get_youtube_resources(topic: str):
-
+def get_youtube_resources(topic: str, subject: str):
+    
     search_url = "https://www.googleapis.com/youtube/v3/search"
 
-    query = f"{topic} explanation tutorial examples"
+    query = build_query(topic, subject)  # ✅ now works
 
     params = {
         "part": "snippet",
@@ -695,7 +699,6 @@ def get_youtube_resources(topic: str):
         "order": "relevance",
         "key": YOUTUBE_API_KEY
     }
-
     try:
         response = requests.get(search_url, params=params, timeout=5)
 
@@ -739,30 +742,36 @@ def get_article_resources(topic: str):
             "type": "article"
         },
         {
-            "title": f"Wikipedia: {topic}",
-            "url": f"https://en.wikipedia.org/wiki/{topic_underscore}",
+            "title": f"W3Schools: {topic}",
+            "url": f"https://www.w3schools.com/{topic_underscore}",
             "type": "article"
         }
     ]
 
+def get_all_resources(topic: str, subject: str):
 
-def get_all_resources(topic: str):
-
-    videos = get_youtube_resources(topic)
+    videos = get_youtube_resources(topic, subject)
     articles = get_article_resources(topic)
 
     return videos + articles
 
+def build_query(topic: str, subject: str):
+
+    base = f"{topic} in {subject}" if subject else topic
+
+    return f"{base} explained clearly with examples for beginners"
+
 
 # ================= RECOMMEND API =================
+@router.get("/recommend")
+def recommend_resources(topic: str, subject: str = ""):
 
-@router.get("/recommend/{topic}")
-def recommend_resources(topic: str):
     try:
-        resources = get_all_resources(topic)
+        resources = get_all_resources(topic, subject)
 
         return {
             "topic": topic,
+            "subject": subject,
             "resources": resources
         }
 
@@ -774,49 +783,62 @@ def recommend_resources(topic: str):
             "resources": []
         }
 
-
 # # ================= AI EXPLANATION =================
+# class ExplainInput(BaseModel):
+#     topic: str
+# @app.post("/api/explain")
+# def explain_topic(data: ExplainInput):
 
-OLLAMA_URL = "http://localhost:11434/api/generate"
-MODEL_NAME = "mistral"
+#     prompt = f"""
+# Explain the topic '{data.topic}' in simple terms.
+# Include:
+# - key concepts
+# - important points
+# - real-world use
+# """
 
-class ExplainInput(BaseModel):
-    topic: str
+#     try:
+#         response = requests.post(
+#             OLLAMA_URL,
+#             json={
+#                 "model": MODEL_NAME,
+#                 "prompt": prompt,
+#                 "stream": False
+#             },
+#             timeout=120   # 🔥 increased timeout
+#         )
 
+#         if response.status_code != 200:
+#             print("❌ Ollama error:", response.text)
+#             raise Exception("Ollama failed")
 
-@app.post("/api/explain")
-def explain_topic(data: ExplainInput):
+#         json_data = response.json()
+#         explanation = json_data.get("response", "").strip()
 
-    prompt = f"""
-Explain the topic '{data.topic}' in simple terms.
-Include:
-- key concepts
-- important points
-- real-world use
-"""
+#         if not explanation:
+#             explanation = "⚠ No explanation generated."
 
-    try:
-        response = requests.post(
-            OLLAMA_URL,
-            json={
-                "model": MODEL_NAME,
-                "prompt": prompt,
-                "stream": False
-            },
-            timeout=120
-        )
+#     except Exception as e:
+#         print("🔥 AI ERROR:", str(e))
 
-        explanation = response.json().get("response", "").strip()
+#         # ✅ SMART FALLBACK (no blank UI)
+#         explanation = f"""
+# 📘 Topic: {data.topic}
 
-    except Exception as e:
-        print("AI error:", e)
-        explanation = "Explanation not available."
+# Here’s a quick understanding:
 
-    return {
-        "topic": data.topic,
-        "explanation": explanation
-    }
+# • This concept is important in learning {data.topic}
+# • Focus on understanding the core idea
+# • Practice with examples
+# • Try applying it in real-world scenarios
 
+# ⚠ AI response delayed — showing fallback explanation.
+# """
+
+#     return {
+#         "topic": data.topic,
+#         "explanation": explanation
+#     }
 
 # # ================= MCQ GENERATION =================
 

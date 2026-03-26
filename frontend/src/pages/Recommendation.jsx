@@ -19,21 +19,13 @@ function Recommendation() {
 
             try {
 
-                // 🔹 Resources
-                const res = await API.get(`/api/recommend/${decodedTopic}`);
+                const [topicName, subjectName] = decodedTopic.split("||");
+
+                const res = await API.get(
+                    `/api/recommend?topic=${encodeURIComponent(topicName)}&subject=${encodeURIComponent(subjectName)}`
+                );
+
                 setResources(res.data.resources || []);
-
-                // 🔹 AI Explanation
-                try {
-                    const ai = await API.post("/api/explain", {
-                        topic: decodedTopic
-                    });
-
-                    setExplanation(ai.data.explanation);
-
-                } catch (err) {
-                    setExplanation("⚠ AI explanation temporarily unavailable.");
-                }
 
             } catch (err) {
                 console.error(err);
@@ -41,7 +33,6 @@ function Recommendation() {
 
             setLoading(false);
         };
-
         fetchRecommendations();
 
     }, [decodedTopic]);
@@ -73,7 +64,7 @@ function Recommendation() {
                 </motion.h1>
 
                 {/* AI EXPLANATION */}
-                <motion.div
+                {/* <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     className="bg-[#1E293B] p-8 rounded-2xl border border-[#2E3A59] mb-10"
@@ -82,7 +73,7 @@ function Recommendation() {
                     <p className="text-gray-300 leading-relaxed whitespace-pre-line">
                         {explanation}
                     </p>
-                </motion.div>
+                </motion.div> */}
 
                 {/* TABS */}
                 <div className="flex gap-4 mb-8">

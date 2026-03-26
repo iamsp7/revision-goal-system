@@ -5,27 +5,20 @@ import os
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY") or "AIzaSyDLoJXfLCNxmoVD8c0G5jTqXX17Rt9epmk"
 
 
-def get_youtube_resources(topic: str):
-    """
-    Fetch YouTube videos related to a specific topic.
-    Returns clean, embeddable resources.
-    """
-
+def get_youtube_resources(topic: str, subject: str):
+    
     search_url = "https://www.googleapis.com/youtube/v3/search"
 
-    # 🔥 Smart query for better results
-    query = f"{topic} programming concept explanation examples"
+    query = build_query(topic, subject)  # ✅ now works
 
     params = {
         "part": "snippet",
         "q": query,
         "type": "video",
-        "maxResults": 8,
-        "videoDuration": "medium",   # avoid shorts
+        "maxResults": 5,
         "order": "relevance",
         "key": YOUTUBE_API_KEY
     }
-
     try:
         response = requests.get(search_url, params=params)
 
@@ -65,6 +58,8 @@ def get_youtube_resources(topic: str):
         return []
 
 
+
+
 def get_article_resources(topic: str):
     """
     Return article links for the topic
@@ -86,13 +81,9 @@ def get_article_resources(topic: str):
         }
     ]
 
+def get_all_resources(topic: str, subject: str):
 
-def get_all_resources(topic: str):
-    """
-    Combine videos + articles
-    """
-
-    videos = get_youtube_resources(topic)
+    videos = get_youtube_resources(topic, subject)
     articles = get_article_resources(topic)
 
     return videos + articles

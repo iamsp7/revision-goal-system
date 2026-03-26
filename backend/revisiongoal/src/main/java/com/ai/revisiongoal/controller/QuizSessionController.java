@@ -43,11 +43,10 @@ public class QuizSessionController {
         session.setUserId(user.getId());
         session.setStartedAt(LocalDateTime.now());
 
-        // 🔥 ADD THIS LINE (VERY IMPORTANT)
-        if (session.getTopic() == null || session.getTopic().isEmpty()) {
-            session.setTopic(session.getSubject().getName());
+        if (session.getTopic() == null || session.getTopic().trim().isEmpty()) {
+            throw new RuntimeException("Topic must be provided when starting quiz");
         }
-
+        System.out.println("🔥 START SESSION TOPIC: " + session.getTopic());
         return service.startSession(session);
     }
 

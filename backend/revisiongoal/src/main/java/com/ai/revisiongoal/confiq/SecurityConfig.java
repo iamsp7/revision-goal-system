@@ -25,6 +25,7 @@ public class SecurityConfig {
                 // Public APIs
                 .requestMatchers("/api/users/register", "/api/users/login").permitAll()
                 .requestMatchers  ("/api/recommend/**").permitAll()
+                .requestMatchers("/api/explain").permitAll()
                 // Everything else under /api requires authentication
                 .requestMatchers("/api/**").authenticated()
                 

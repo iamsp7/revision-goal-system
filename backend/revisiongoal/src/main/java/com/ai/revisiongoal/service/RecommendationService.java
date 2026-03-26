@@ -12,9 +12,10 @@ public class RecommendationService {
         this.restTemplate = restTemplate;
     }
 
-    public Object recommendTopic(String topic) {
+    public Object recommendTopic(String topic, String subject) {
 
-    	String url = "http://localhost:8000/api/recommend/" + topic;
+        String url = "http://localhost:8000/api/recommend?topic=" 
+                + topic + "&subject=" + (subject != null ? subject : "");
 
         return restTemplate.getForObject(url, Object.class);
     }

@@ -29,13 +29,21 @@ function QuizAttempt() {
 
                 /* -------- Start Session -------- */
                 const userId = localStorage.getItem("userId");
+                const selectedTopic = localStorage.getItem("selectedTopic");
+
+                console.log("🔥 Selected Topic:", selectedTopic);
 
                 if (!userId) {
-                    throw new Error("User ID not found in localStorage");
+                    throw new Error("User ID not found");
+                }
+
+                if (!selectedTopic || selectedTopic === "null") {
+                    throw new Error("No topic selected. Please select topic first.");
                 }
 
                 const sessionRes = await API.post("/api/sessions/start", {
                     userId: Number(userId),
+                    topic: selectedTopic,   // ✅ FIXED (NO MORE RANDOM TOPIC)
                     subject: { id: Number(id) }
                 });
 
@@ -44,7 +52,7 @@ function QuizAttempt() {
 
             } catch (err) {
                 console.error("Initialization error:", err);
-                setError("Failed to load quiz. Check backend.");
+                setError(err.message || "Failed to load quiz.");
             } finally {
                 setLoading(false);
             }
@@ -84,11 +92,14 @@ function QuizAttempt() {
             }
 
             const total = mcqs.length;
-            const score = (correctCount / total) * 100;
+            const score = total > 0 ? (correctCount / total) * 100 : 0;
 
             await API.post(
                 `/api/sessions/finish/${sessionId}?totalQuestions=${total}&correctAnswers=${correctCount}&totalScore=${score}`
             );
+
+            // ✅ Clean topic after use
+            localStorage.removeItem("selectedTopic");
 
             setScoreModal(score.toFixed(2));
 
@@ -107,7 +118,7 @@ function QuizAttempt() {
         return <div className="text-red-400 p-10">{error}</div>;
 
     if (mcqs.length === 0)
-        return <div className="text-yellow-400 p-10">No MCQs found for this subject.</div>;
+        return <div className="text-yellow-400 p-10">No MCQs found.</div>;
 
     return (
         <div className="min-h-screen bg-[#0B0F1A] text-white px-6 py-16">
@@ -155,9 +166,7 @@ function QuizAttempt() {
 
             <AnimatePresence>
                 {scoreModal && (
-                    <motion.div
-                        className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center"
-                    >
+                    <motion.div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center">
                         <motion.div className="bg-[#1E293B] p-10 rounded-2xl text-center">
                             <h2 className="text-2xl font-bold mb-4">
                                 Quiz Finished 🎉

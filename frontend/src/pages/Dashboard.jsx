@@ -28,8 +28,6 @@ function Dashboard() {
     const [trendData, setTrendData] = useState([]);
     const [dueTopics, setDueTopics] = useState([]);
     const [loading, setLoading] = useState(true);
-
-    // 🔥 FIXED STATE
     const [showAll, setShowAll] = useState(false);
 
     useEffect(() => {
@@ -44,8 +42,12 @@ function Dashboard() {
 
                 const sessions = sessionsRes.data || [];
 
-                // ✅ Backend now returns TopicDTO
-                setDueTopics(dueRes.data || []);
+                // ✅ CLEAN + SAFE DATA
+                const safeTopics = (dueRes.data || []).filter(t =>
+                    t && t.topic && t.topic !== "null"
+                );
+
+                setDueTopics(safeTopics);
 
                 const validSessions = sessions
                     .filter(s => s.finishedAt)
@@ -106,10 +108,9 @@ function Dashboard() {
         );
     }
 
-    // ✅ FIXED LOGIC
     const visibleTopics = showAll
-        ? [...dueTopics]
-        : [...dueTopics].slice(0, 2);
+        ? dueTopics
+        : dueTopics.slice(0, 2);
 
     return (
 
@@ -176,7 +177,7 @@ function Dashboard() {
 
                 </div>
 
-                {/* WEAK TOPICS */}
+                {/* SPACED REPETITION SECTION */}
                 <div className="bg-[#1E293B] p-10 rounded-2xl border border-[#2E3A59]">
 
                     <div className="flex justify-between items-center mb-6">
@@ -184,11 +185,10 @@ function Dashboard() {
                         <div className="flex items-center gap-3">
                             <Calendar className="text-indigo-400" />
                             <h2 className="text-2xl font-bold">
-                                Today's Focus
+                                Today's Focus (Spaced Revision)
                             </h2>
                         </div>
 
-                        {/* ✅ FIXED BUTTON */}
                         {dueTopics.length > 2 && (
                             <button
                                 onClick={() => setShowAll(prev => !prev)}
@@ -205,18 +205,20 @@ function Dashboard() {
                     {dueTopics.length === 0 ? (
 
                         <p className="text-gray-400">
-                            🎉 No weak topics today. You're doing great!
+                            🎉 No revision due today. You're on track!
                         </p>
 
                     ) : (
 
                         <div className="grid md:grid-cols-2 gap-6">
 
-                            {visibleTopics.map((topic, index) => {
+                            {visibleTopics.map((item, index) => {
 
-                                // ✅ CLEAN DTO USAGE
-                                const topicName = topic.topic;
-                                const subject = topic.subject || "General";
+                                const topicName = item.topic;
+                                const subjectName =
+                                    typeof item.subject === "string"
+                                        ? item.subject
+                                        : item.subject?.name || "General";
 
                                 return (
 
@@ -224,14 +226,19 @@ function Dashboard() {
                                         key={index}
                                         whileHover={{ scale: 1.05 }}
                                         whileTap={{ scale: 0.97 }}
-                                        onClick={() =>
-                                            navigate(`/recommendation/${encodeURIComponent(topicName + " " + subject)}`)
-                                        }
+                                        onClick={() => {
+
+                                            const encoded = encodeURIComponent(
+                                                topicName + "||" + subjectName
+                                            );
+
+                                            navigate(`/recommendation/${encoded}`);
+                                        }}
                                         className="bg-[#0B0F1A] p-6 rounded-xl border border-red-500 cursor-pointer hover:border-red-400 transition"
                                     >
 
                                         <p className="text-red-400 text-sm mb-2">
-                                            ⚠ Weak Topic
+                                            ⚠ Revision Due
                                         </p>
 
                                         <h3 className="text-xl font-semibold mb-1">
@@ -239,11 +246,11 @@ function Dashboard() {
                                         </h3>
 
                                         <p className="text-gray-400 text-sm mb-3">
-                                            Subject: {subject}
+                                            Subject: {subjectName}
                                         </p>
 
                                         <p className="text-sm text-gray-300">
-                                            Click to improve this topic →
+                                            Click to revise →
                                         </p>
 
                                     </motion.div>

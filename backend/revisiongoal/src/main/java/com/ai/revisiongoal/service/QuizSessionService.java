@@ -20,8 +20,8 @@ public class QuizSessionService {
     private final QuizSessionRepository repository;
     private final TopicRevisionStateRepository revisionRepository;
     private final RestTemplate restTemplate;
-
-    private final String FASTAPI_URL = "http://localhost:8000/update-spaced-repetition";
+//
+//    private final String FASTAPI_URL = "http://localhost:8000/update-spaced-repetition";
 
     public QuizSessionService(
             QuizSessionRepository repository,
@@ -59,67 +59,57 @@ public class QuizSessionService {
 
         repository.save(session);
 
-        double accuracy = totalQuestions == 0
-                ? 0
-                : ((double) correctAnswers / totalQuestions) * 100;
-
-        String topic = session.getSubject() != null
-                ? session.getSubject().getName()
-                : "Unknown";
-
-        updateSpacedRepetition(session.getUserId(), topic, accuracy);
-
         return session;
     }
     // =========================
     // Update Spaced Repetition
     // =========================
-    private void updateSpacedRepetition(Long userId, String topic, double accuracy) {
-
-        TopicRevisionState state = revisionRepository
-                .findByUserIdAndTopic(userId, topic)
-                .orElse(
-                        TopicRevisionState.builder()
-                                .userId(userId)
-                                .topic(topic)
-                                .repetitions(0)
-                                .easeFactor(2.5)
-                                .intervalDays(1)
-                                .build()
-                );
-
-        // Prepare request body for FastAPI
-        Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("accuracy", accuracy);
-        requestBody.put("repetitions", state.getRepetitions());
-        requestBody.put("easeFactor", state.getEaseFactor());
-        requestBody.put("intervalDays", state.getIntervalDays());
-
-        try {
-            ResponseEntity<Map> response =
-                    restTemplate.postForEntity(
-                            FASTAPI_URL,
-                            requestBody,
-                            Map.class
-                    );
-
-            Map result = response.getBody();
-
-            if (result != null) {
-                state.setRepetitions((Integer) result.get("repetitions"));
-                state.setEaseFactor(Double.parseDouble(result.get("easeFactor").toString()));
-                state.setIntervalDays((Integer) result.get("intervalDays"));
-                state.setNextReview(LocalDateTime.parse(result.get("nextReview").toString()));
-                state.setLastReview(LocalDateTime.now());
-                state.setLastAccuracy(accuracy);
-
-                revisionRepository.save(state);
-            }
-
-        } catch (Exception e) {
-            System.out.println("FastAPI spaced repetition error: " + e.getMessage());
-        }
-    }
+//    private void updateSpacedRepetition(Long userId, String topic, double accuracy) {
+//
+//        TopicRevisionState state = revisionRepository
+//                .findByUserIdAndTopic(userId, topic)
+//                .orElse(
+//                        TopicRevisionState.builder()
+//                                .userId(userId)
+//                                .topic(topic)
+//                                .repetitions(0)
+//                                .easeFactor(2.5)
+//                                .intervalDays(1)
+//                                .build()
+//                );
+//
+//        // Prepare request body for FastAPI
+//        Map<String, Object> requestBody = new HashMap<>();
+//        requestBody.put("accuracy", accuracy);
+//        requestBody.put("repetitions", state.getRepetitions());
+//        requestBody.put("easeFactor", state.getEaseFactor());
+//        requestBody.put("intervalDays", state.getIntervalDays());
+//
+//        try {
+//            ResponseEntity<Map> response =
+//                    restTemplate.postForEntity(
+//                            FASTAPI_URL,
+//                            requestBody,
+//                            Map.class
+//                    );
+//
+//            Map result = response.getBody();
+//
+//            if (result != null) {
+//                state.setRepetitions((Integer) result.get("repetitions"));
+//                state.setEaseFactor(Double.parseDouble(result.get("easeFactor").toString()));
+//                state.setIntervalDays((Integer) result.get("intervalDays"));
+//                state.setNextReview(LocalDateTime.parse(result.get("nextReview").toString()));
+//                state.setLastReview(LocalDateTime.now());
+//                state.setLastAccuracy(accuracy);
+//
+//                revisionRepository.save(state);
+//            }
+//
+//        } catch (Exception e) {
+//            System.out.println("FastAPI spaced repetition error: " + e.getMessage());
+//        }
+//    }
 
     // =========================
     // Get Sessions By User

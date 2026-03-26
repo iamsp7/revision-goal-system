@@ -37,16 +37,25 @@ public class RevisionService {
     // =========================
     // Update After Quiz
     // =========================
+    
     public void updateAfterQuiz(Long userId, String topic, String subjectName, double accuracy) {
+    	
+    	if (topic == null || topic.trim().isEmpty()) {
+    	    throw new RuntimeException("Topic cannot be null or empty");
+    	}
 
-        TopicRevisionState state = repository
-                .findByUserIdAndTopic(userId, topic)
-                .orElse(
-                        TopicRevisionState.builder()
-                                .userId(userId)
-                                .topic(topic)
-                                .build()
-                );
+    	TopicRevisionState state = repository
+    	        .findByUserIdAndTopic(userId, topic)
+    	        .orElseGet(() -> TopicRevisionState.builder()
+    	                .userId(userId)
+    	                .topic(topic.trim()) // ✅ SAFE
+    	                .correctStreak(0)
+    	                .repetitions(0)
+    	                .intervalDays(1)
+    	                .easeFactor(2.5)
+    	                .mastered(false)
+    	                .build()
+    	        );
 
         // 🔥 FIX: Convert subject name → Subject entity
         Subject subject = subjectRepository.findByNameIgnoreCase(subjectName)
