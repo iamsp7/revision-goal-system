@@ -154,22 +154,35 @@ function Login() {
                     </p>
                 </motion.div>
             </div>
-
             {/* RIGHT HERO */}
             <div className="hidden lg:flex w-1/2 relative overflow-hidden">
+
                 <div className="absolute inset-0 bg-gradient-to-br from-indigo-700 via-indigo-800 to-[#0B0F1A]" />
-                <div className="relative z-10 flex flex-col justify-center px-20 text-white">
-                    <h1 className="text-5xl font-extrabold mb-6">
+
+                {/* 🔥 TRUE CENTER CONTAINER */}
+                <div className="relative z-10 flex flex-col items-center justify-center w-full h-full text-white text-center px-10">
+
+                    {/* LOGO */}
+                    <img
+                        src={StudyBeacon}
+                        alt="StudyBeacon"
+                        className="h-30 mb-8 object-contain mx-auto"
+                    />
+
+                    {/* TITLE */}
+                    <h1 className="text-5xl font-extrabold mb-4 leading-tight">
                         StudyBeacon
                     </h1>
-                    <p className="text-lg text-indigo-200 max-w-md">
+
+                    {/* DESCRIPTION */}
+                    <p className="text-lg text-indigo-200 max-w-md mx-auto">
                         Track progress. Identify weak topics. Master concepts smarter.
                         Your AI-powered revision partner.
                     </p>
                 </div>
+
                 <div className="absolute bottom-0 w-full h-40 bg-[#0B0F1A] rounded-t-[100%]" />
             </div>
-
         </div>
     );
 }

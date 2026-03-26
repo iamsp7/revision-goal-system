@@ -10,6 +10,7 @@ import Navbar from "./components/Navbar";
 import QuizAttempt from "./pages/QuizAttempt";
 import QuizSubjects from "./pages/QuizSubjects";
 import Recommendation from "./pages/Recommendation";
+import ArticlePage from "./pages/ArticlePage";
 
 
 /* ---------------- Auth Helpers ---------------- */
@@ -161,7 +162,17 @@ function App() {
               </Layout>
             </ProtectedRoute>
           }
-        />  
+        />
+        <Route
+          path="/article/:data"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <ArticlePage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
 
 
         {/* Fallback */}

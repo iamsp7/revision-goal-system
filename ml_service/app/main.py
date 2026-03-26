@@ -657,7 +657,7 @@
 
 
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import FastAPI, UploadFile, File, Form, APIRouter
+from fastapi import FastAPI, UploadFile, File, Form, APIRouter,Query
 from pydantic import BaseModel
 from datetime import datetime, timedelta
 import pdfplumber
@@ -728,22 +728,29 @@ def get_youtube_resources(topic: str, subject: str):
     except Exception as e:
         print("YouTube Error:", e)
         return []
+def get_article_resources(topic: str, subject: str = ""):
 
-
-def get_article_resources(topic: str):
-
-    topic_dash = topic.replace(" ", "-").lower()
-    topic_underscore = topic.replace(" ", "_")
+    q = f"{topic} {subject}".replace(" ", "+")
 
     return [
         {
-            "title": f"GeeksforGeeks: {topic}",
-            "url": f"https://www.geeksforgeeks.org/{topic_dash}/",
+            "title": f"GeeksforGeeks",
+            "url": f"https://www.google.com/search?q={q}+geeksforgeeks",
             "type": "article"
         },
         {
-            "title": f"W3Schools: {topic}",
-            "url": f"https://www.w3schools.com/{topic_underscore}",
+            "title": f"W3Schools",
+            "url": f"https://www.google.com/search?q={q}+w3schools",
+            "type": "article"
+        },
+        {
+            "title": f"Javatpoint",
+            "url": f"https://www.google.com/search?q={q}+javatpoint",
+            "type": "article"
+        },
+        {
+            "title": f"TutorialsPoint",
+            "url": f"https://www.google.com/search?q={q}+tutorialspoint",
             "type": "article"
         }
     ]
@@ -761,7 +768,76 @@ def build_query(topic: str, subject: str):
 
     return f"{base} explained clearly with examples for beginners"
 
+def summarize_text(text):
+    # 🔥 simple summarizer (fast)
+    sentences = text.split(".")
+    return ". ".join(sentences[:8])  # first 8 sentences
 
+
+# @app.get("/api/article")
+# def get_article(topic: str = Query(...), subject: str = Query("")):
+
+#     # 🔥 Smart manual explanation generator
+#     content = f"""
+# 📘 {topic}
+
+# 🔹 Definition:
+# {topic} is an important concept in {subject}. It helps in understanding how systems behave and ensures proper structure and reliability.
+
+# 🔹 Key Concepts:
+# • Fundamental principles of {topic}  
+# • How it is applied in {subject}  
+# • Importance in real-world systems  
+
+# 🔹 Explanation:
+# In simple terms, {topic} ensures that operations are performed correctly and efficiently. It is widely used in practical scenarios like system design, databases, and application development.
+
+# 🔹 Real-World Use:
+# • Used in software systems  
+# • Helps maintain consistency and performance  
+# • Important for developers and engineers  
+
+# 🔹 Tip:
+# Focus on understanding examples — that’s the fastest way to learn this topic.
+# """
+
+#     return {
+#         "title": topic,
+#         "content": content
+#     }
+
+
+@app.get("/api/explain")
+def get_article(topic: str = Query(...), subject: str = Query("")):
+
+    # 🔥 Smart manual explanation generator
+    content = f"""
+📘 {topic}
+
+🔹 Definition:
+{topic} is an important concept in {subject}. It helps in understanding how systems behave and ensures proper structure and reliability.
+
+🔹 Key Concepts:
+• Fundamental principles of {topic}  
+• How it is applied in {subject}  
+• Importance in real-world systems  
+
+🔹 Explanation:
+In simple terms, {topic} ensures that operations are performed correctly and efficiently. It is widely used in practical scenarios like system design, databases, and application development.
+
+🔹 Real-World Use:
+• Used in software systems  
+• Helps maintain consistency and performance  
+• Important for developers and engineers  
+
+🔹 Tip:
+Focus on understanding examples — that’s the fastest way to learn this topic.
+"""
+
+    return {
+        "title": topic,
+        "content": content
+    }
 # ================= RECOMMEND API =================
 @router.get("/recommend")
 def recommend_resources(topic: str, subject: str = ""):
